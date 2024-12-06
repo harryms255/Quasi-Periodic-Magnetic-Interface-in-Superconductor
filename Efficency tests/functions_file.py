@@ -366,71 +366,8 @@ def TB_phase_boundaries_numpy(t,mu,Delta,km,B,Vm,theta,pm,kx=0):
     
     return Vm-Vm_crit
 
-#Topological Quasi Periodic Operator-------------------------------------------------------
-# @timeit
-# def magnetic_interface_quasi_energy_operator(Nx,N1,N2,t,mu,Delta,km,Vm,omega1,omega2,eta=0.00001j,sparse=False,N1_closed=True,N2_closed=True):
-#     #Real space Hamiltonian of the multi-frequency model in Eq.
-    
-#     #The Hamiltonian is 3D (one real dimension and 2 synthetic dimensions)
-#     #The chose basis is that the particle (hole) modes at (x,n1,n2) is the 
-#     #2*(x+Nx*n1+Nx*N1*n2)(+1) mode in the spinor
-#     if N1_closed==True:
-#         N1_len=2*N1+1
-#         N1_min=-N1
-#         N1_max=N1+1
-#     if N1_closed==False:
-#         N1_len=2*N1
-#         N1_min=-N1
-#         N1_max=N1
-    
-#     if N2_closed==True:
-#         N2_len=2*N2+1
-#         N2_min=-N2
-#         N2_max=N2+1
-#     if N2_closed==False:
-#         N2_len=2*N2
-#         N2_min=-N2
-#         N2_max=N2
-    
-    
-#     if sparse==False:
-#         K=np.zeros((4*Nx*N1_len*N2_len,4*Nx*N1_len*N2_len),dtype=complex)
-#     if sparse==True:
-#         K=dok_matrix((4*Nx*N1_len*N2_len,4*Nx*N1_len*N2_len),dtype=complex)
-    
-#     #h1 terms
-#     for x in range(Nx):
-#         for n1 in range(N1_len):
-#             for n2 in range(N2_len):
-#                 if n1!=N1_len-1:
-#                     K[4*(x+Nx*(n1)+Nx*N1_len*n2),4*(x+Nx*(n1+1)+Nx*N1_len*n2)+1]=-Vm
-#                     K[4*(x+Nx*(n1)+Nx*N1_len*n2)+3,4*(x+Nx*(n1+1)+Nx*N1_len*n2)+2]=Vm
-                    
-                    
-#                 if n2!=N2_len-1:
-#                     K[4*(x+Nx*(n1)+Nx*N1_len*n2),4*(x+Nx*(n1)+Nx*N1_len*(n2+1))+1]=-Vm
-#                     K[4*(x+Nx*(n1)+Nx*N1_len*n2)+3,4*(x+Nx*(n1)+Nx*N1_len*(n2+1))+2]=Vm
-        
-#     K+=np.conj(K.T)
-    
-#     #h0 terms and effective electric field
-#     h0=real_space_topological_hamiltonian(0,Nx, t, mu, Delta, km, 0, 0, np.pi/2,sparse=sparse,eta=eta)
-#     for n1,n1_value in enumerate(range(N1_min,N1_max)):
-#         for n2,n2_value in enumerate(range(N2_min,N2_max)):
-#             h0=real_space_topological_hamiltonian(n1_value*omega1+n2_value*omega2,Nx,t,mu,Delta,km,0,Vm,np.pi/2,sparse=sparse,eta=eta)
-#             # if sparse==False:
-#             #     K[4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2),4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2)]=h0-2*(n1_value*omega1+n2_value*omega2)*np.identity(4*Nx)
-#             # if sparse==True:
-#             #     K[4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2),4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2)]=h0-2*(n1_value*omega1+n2_value*omega2)*sp.identity(4*Nx,format="csc")
-#             if sparse==False:
-#                 K[4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2),4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2)]=h0
-#             if sparse==True:
-#                 K[4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2),4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2)]=h0
-#     if sparse==True:
-#         K=K.tocsc()
-           
-#     return K
-# @timeit
+#Quasi Periodic Operator-------------------------------------------------------
+@timeit
 def magnetic_interface_quasi_energy_operator(Nx,N1,N2,t,mu,Delta,km,Vm,omega1,omega2,eta=0.00001j,sparse=False,N1_closed=True,N2_closed=True):
     #Real space Hamiltonian of the multi-frequency model in Eq.
     
@@ -439,17 +376,84 @@ def magnetic_interface_quasi_energy_operator(Nx,N1,N2,t,mu,Delta,km,Vm,omega1,om
     #2*(x+Nx*n1+Nx*N1*n2)(+1) mode in the spinor
     if N1_closed==True:
         N1_len=2*N1+1
-        
+        N1_min=-N1
+        N1_max=N1+1
     if N1_closed==False:
         N1_len=2*N1
-        
+        N1_min=-N1
+        N1_max=N1
     
     if N2_closed==True:
         N2_len=2*N2+1
-        
+        N2_min=-N2
+        N2_max=N2+1
     if N2_closed==False:
         N2_len=2*N2
+        N2_min=-N2
+        N2_max=N2
+    
+    
+    if sparse==False:
+        K=np.zeros((4*Nx*N1_len*N2_len,4*Nx*N1_len*N2_len),dtype=complex)
+    if sparse==True:
+        K=dok_matrix((4*Nx*N1_len*N2_len,4*Nx*N1_len*N2_len),dtype=complex)
+    
+    #h1 terms
+    for x in range(Nx):
+        for n1 in range(N1_len):
+            for n2 in range(N2_len):
+                if n1!=N1_len-1:
+                    K[4*(x+Nx*(n1)+Nx*N1_len*n2),4*(x+Nx*(n1+1)+Nx*N1_len*n2)+1]=-Vm
+                    K[4*(x+Nx*(n1)+Nx*N1_len*n2)+3,4*(x+Nx*(n1+1)+Nx*N1_len*n2)+2]=Vm
+                    
+                    
+                if n2!=N2_len-1:
+                    K[4*(x+Nx*(n1)+Nx*N1_len*n2),4*(x+Nx*(n1)+Nx*N1_len*(n2+1))+1]=-Vm
+                    K[4*(x+Nx*(n1)+Nx*N1_len*n2)+3,4*(x+Nx*(n1)+Nx*N1_len*(n2+1))+2]=Vm
         
+    K+=np.conj(K.T)
+    
+    #h0 terms and effective electric field
+    h0=real_space_topological_hamiltonian(0,Nx, t, mu, Delta, km, 0, 0, np.pi/2,sparse=sparse,eta=eta)
+    for n1,n1_value in enumerate(range(N1_min,N1_max)):
+        for n2,n2_value in enumerate(range(N2_min,N2_max)):
+            h0=real_space_topological_hamiltonian(n1_value*omega1+n2_value*omega2,Nx,t,mu,Delta,km,0,Vm,np.pi/2,sparse=sparse,eta=eta)
+            # if sparse==False:
+            #     K[4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2),4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2)]=h0-2*(n1_value*omega1+n2_value*omega2)*np.identity(4*Nx)
+            # if sparse==True:
+            #     K[4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2),4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2)]=h0-2*(n1_value*omega1+n2_value*omega2)*sp.identity(4*Nx,format="csc")
+            if sparse==False:
+                K[4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2),4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2)]=h0
+            if sparse==True:
+                K[4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2),4*(Nx*(n1)+Nx*N1_len*n2):4*(Nx+Nx*(n1)+Nx*N1_len*n2)]=h0
+    if sparse==True:
+        K=K.tocsc()
+           
+    return K
+@timeit
+def magnetic_interface_quasi_energy_operator_improved(Nx,N1,N2,t,mu,Delta,km,Vm,omega1,omega2,eta=0.00001j,sparse=False,N1_closed=True,N2_closed=True):
+    #Real space Hamiltonian of the multi-frequency model in Eq.
+    
+    #The Hamiltonian is 3D (one real dimension and 2 synthetic dimensions)
+    #The chose basis is that the particle (hole) modes at (x,n1,n2) is the 
+    #2*(x+Nx*n1+Nx*N1*n2)(+1) mode in the spinor
+    if N1_closed==True:
+        N1_len=2*N1+1
+        N1_min=-N1
+        N1_max=N1+1
+    if N1_closed==False:
+        N1_len=2*N1
+        N1_min=-N1
+        N1_max=N1
+    
+    if N2_closed==True:
+        N2_len=2*N2+1
+        N2_min=-N2
+        N2_max=N2+1
+    if N2_closed==False:
+        N2_len=2*N2
+        N2_min=-N2
+        N2_max=N2
         
     
     

@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Oct 28 14:54:06 2024
+Created on Wed Dec  4 14:27:54 2024
 
 @author: Harry MullineauxSanders
 """
 
 from functions_file import *
 plt.close("all")
-Nx=50
-N1=20
+Nx=75
+N1=15
 N2=0
 t=1
 mu=-3.6
 km=0.65
-Delta=1
+Delta=0.1
 Vm=1
 omega1=0.1*Delta
 omega2=(1+np.sqrt(5))/2*omega1
@@ -32,7 +32,6 @@ N2_closed_values=[True]
 fig,axs=plt.subplots(1,len(E_values),figsize=[12,8])
 
 invariant_values=np.zeros((len(E_values),len(Vm_values)))
-loc_gap_values=np.zeros((len(E_values),len(Vm_values)))
 
 
 for i in range(len(E_values)):
@@ -40,19 +39,12 @@ for i in range(len(E_values)):
     N1_closed=N1_closed_values[i]
     N2_closed=N2_closed_values[i]
     for Vm_indx,Vm in enumerate(tqdm(Vm_values)):
-        #loc_gap_values[i,x_indx]=localiser_gap(x, E, Nx, N1, N2, t, mu, Delta, km, Vm, omega1, omega2,sparse=True,N1_closed=N1_closed,N2_closed=N2_closed)
         invariant_values[i,Vm_indx]=class_D_invariant(x, E, Nx, N1, N2, t, mu, Delta, km, Vm, omega1, omega2,sparse=True,N1_closed=N1_closed,N2_closed=N2_closed)
-    
-    
-    
-    #ax=axs[1,i]
     ax=axs
     
     ax.plot(Vm_values,invariant_values[i,:],"k.-")
     ax.set_xlabel(r"$V_m/t$")
-    ax.set_ylabel(r"$\nu(x)$")
-    # ax.axvline(x=0)
-    # ax.axvline(x=Nx-1)
+    ax.set_ylabel(r"$\nu(x=N_x/2)$")
     ax.axvline(x=phase_boundaries_1,linestyle="dashed",color="black")
-    ax.axvline(x=phase_boundaries_2,linestyle="dashed",color="black")
+    #ax.axvline(x=phase_boundaries_2,linestyle="dashed",color="black")
     ax.set_ylim(top=1.1,bottom=-1.1)
