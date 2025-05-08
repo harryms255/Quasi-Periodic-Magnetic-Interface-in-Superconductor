@@ -8,7 +8,7 @@ Created on Fri Apr 18 11:06:41 2025
 
 from one_dim_driven_interface_functions_file import *
 
-Nx=160
+Nx=100
 N1=30
 N2=30
 t=1
@@ -19,7 +19,7 @@ B=0.6*Delta
 omega1=2*B
 omega2=(1+np.sqrt(5))/2*omega1
 
-Vm_values=np.linspace(0,Delta,251)
+Vm_values=np.linspace(0,Delta,101)
 
 x=Nx//2
 E_values=[omega1/2,omega2/2]
@@ -40,7 +40,7 @@ for i in range(2):
     for Vm_indx,Vm in enumerate(tqdm(Vm_values)):
         invariant_values[i,Vm_indx]=class_D_quasi_periodic_invariant(x, E, Nx, N1, N2, t, mu, Delta, km, Vm, omega1, omega2,sparse=sparse,N1_closed=N1_closed,N2_closed=N2_closed)
     
-    ax.plot(Vm_values,invariant_values[i,:],"k-.")
+    ax.plot(Vm_values,invariant_values[i,:],"k-o")
     
     ax.set_xlabel(r"$V_m/t$")
     ax.set_ylabel(r"$\nu(x=N_x/2)$")

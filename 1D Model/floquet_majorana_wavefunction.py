@@ -7,14 +7,15 @@ Created on Fri Apr  4 14:41:11 2025
 
 from one_dim_driven_interface_functions_file import *
 
-Nx=150
-N1=20
+Nx=200
+N1=50
 t=1
 mu=-1.8
 km=np.arccos(-mu/(2*t))
 Delta=0.1
-B=0.1*Delta
-Vm_values=np.array(([0.8,1,1.2,1.4,1.6,1.8,2]))*phase_boundaries(t, mu, Delta, km, B)
+B=1.1*Delta
+# Vm_values=np.array(([0.8,1,1.2,1.4,1.6,1.8,2]))*phase_boundaries(t, mu, Delta, km, B)
+Vm_values=[0.25]
 omega=2*B
 N1_closed=False
 E=omega/2

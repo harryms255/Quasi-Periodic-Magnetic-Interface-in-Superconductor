@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Dec  6 13:34:40 2024
+Created on Thu May  8 10:40:31 2025
 
 @author: Harry MullineauxSanders
 """
@@ -30,18 +30,6 @@ mentioned below for the N1_closed and N2_closed parameter descriptions.
 
 The indexing conventient used is that the spinor for site at (x,n1,n2) begins at 
 4*(n1+N1_len*n2+x*N1_len*N2_len). The internal degrees are ordered as [(p,up),(p,down),(h,up),(h,down)]
-
-
-The central operator of this code is the quasi-periodic topological Hamiltonian 
-defined at a PHS symmetry quasi energy E_bar as K_top=E_bar-g^-1_K(E_bar)+K_V
-where g_K(E_bar) is the matrix diag(g^-1(E_bar+n1*omega1+n2*omega2)), g is the real space
-retarded Greens function of a s-wave superconductor and K_V is the 
-local driven scattering quasi-energy operator. 
-
-This is calculated by first fourier transforming the analytically determined g^-1 elements at
-all required frequencies. Then these matrix elements are placed into the quasi-energy matrix and stored in the class
-Then the code can iterate through scattering strengths, adding the K_v elements in a seperate function
-
 
 
 Parameters:
@@ -76,17 +64,13 @@ Parameters:
         Second driving frequency
     N1_closed: Boolean, default=True
         Parameter describing whether the truncation of the Fourier modes includes both
-        end frequencies. If true the Fourier modes used will be -N1,-N1_+1,...,N1_-1,N1. 
+        end frequencies. If true the Fourier modes used will be N1,N1_+1,...,N1_-1,N1. 
         If False it will be N1,N1_+1,...,N1_-1. This is important for particle-hole symmetry.
         If particle hole symmetry is required around omega1/2 or (omega1+/-omega2)/2 it should be set
         to False, but should be True otherwise
     N2_closed: Boolean, default=True
         Same as above but for the second dimension of the synethic lattice
-    sparse: Boolean, default=True
-        Determines whether the scipy sparse module should be used. This should be in general true
-        as the matricies will be too large to store as numpy arrays and will be large enough for 
-        sparse calculations to be the most efficent. The spectral localiser formulism only uses
-        sparse matricies.
+    sparse: Boolean, default=False
         
 """
 
@@ -278,132 +262,64 @@ class driven_magnetic_interface(object):
     
 #Quasi Energy operator---------------------------------------------------------
 
-    # def static_quasi_energy_operator_k_space(self,epsilon,kx,eta=0.00001j):
+    def static_quasi_energy_operator_k_space(self,epsilon,kx,eta=0.00001j):
         
-    #     K=np.zeros((4*self.N1_len*self.N2_len,4*self.N1_len*self.N2_len),dtype=complex)
+        K=np.zeros((4*self.N1_len*self.N2_len,4*self.N1_len*self.N2_len),dtype=complex)
         
-    #     for n1,n1_value in enumerate(range(self.N1_min,self.N1_max)):
-    #         for n2,n2_value in enumerate(range(self.N2_min,self.N2_max)):
-    #             #h0=self.TB_topological_Hamiltonian(self.omega1*n1_value+self.omega2*n2_value,kx, 0,eta=eta)
-    #             h0=epsilon*np.identity(4)-np.linalg.inv(self.TB_SC_GF(epsilon+self.omega1*n1_value+self.omega2*n2_value, 0, kx,eta=eta))
-    #             K[4*(n1+self.N1_len*n2):4*(n1+self.N1_len*n2)+4,4*(n1+self.N1_len*n2):4*(n1+self.N1_len*n2)+4]=h0
+        for n1,n1_value in enumerate(range(self.N1_min,self.N1_max)):
+            for n2,n2_value in enumerate(range(self.N2_min,self.N2_max)):
+                #h0=self.TB_topological_Hamiltonian(self.omega1*n1_value+self.omega2*n2_value,kx, 0,eta=eta)
+                h0=epsilon*np.identity(4)-np.linalg.inv(self.TB_SC_GF(epsilon+self.omega1*n1_value+self.omega2*n2_value, 0, kx,eta=eta))
+                K[4*(n1+self.N1_len*n2):4*(n1+self.N1_len*n2)+4,4*(n1+self.N1_len*n2):4*(n1+self.N1_len*n2)+4]=h0
            
-    #     return K
+        return K
     
-    # def quasi_energy_operator_k_space(self,epsilon,kx,Vm,eta=0.00001j):
-    #     #The quasi energy operator is loaded in and divided by two as it makes making it hermitian more convinient
-    #     K=self.static_quasi_energy_operator_k_space(epsilon,kx,eta=eta)
-    #     for n1 in range(self.N1_len):
-    #         for n2 in range(self.N2_len):
-    #             if n1!=self.N1_len-1:
-    #                 K[4*(n1+self.N1_len*n2),4*(n1+1+self.N1_len*n2)+1]=Vm
-    #                 K[4*(n1+self.N1_len*n2)+3,4*(n1+1+self.N1_len*n2)+2]=-Vm
+    def quasi_energy_operator_k_space(self,epsilon,kx,Vm,eta=0.00001j):
+        #The quasi energy operator is loaded in and divided by two as it makes making it hermitian more convinient
+        K=self.static_quasi_energy_operator_k_space(epsilon,kx,eta=eta)
+        for n1 in range(self.N1_len):
+            for n2 in range(self.N2_len):
+                if n1!=self.N1_len-1:
+                    K[4*(n1+self.N1_len*n2),4*(n1+1+self.N1_len*n2)+1]=Vm
+                    K[4*(n1+self.N1_len*n2)+3,4*(n1+1+self.N1_len*n2)+2]=-Vm
                     
                     
-    #             if n2!=self.N2_len-1:
-    #                 K[4*(n1+self.N1_len*n2),4*(n1+self.N1_len*(n2+1))+1]=Vm
-    #                 K[4*(n1+self.N1_len*n2)+3,4*(n1+self.N1_len*(n2+1))+2]=-Vm
+                if n2!=self.N2_len-1:
+                    K[4*(n1+self.N1_len*n2),4*(n1+self.N1_len*(n2+1))+1]=Vm
+                    K[4*(n1+self.N1_len*n2)+3,4*(n1+self.N1_len*(n2+1))+2]=-Vm
         
-    #     K+=np.conj(K.T)
+        K+=np.conj(K.T)
         
-    #     if self.sparse==True:
-    #         K=K.tocsc()
+        if self.sparse==True:
+            K=K.tocsc()
                             
-    #     return K
+        return K
     
-    # def real_space_static_quasi_energy_operator(self,epsilon,eta=0.00001j):
+    def real_space_static_quasi_energy_operator(self,epsilon,eta=0.00001j):
     
     
-    #     x_values=np.linspace(0,self.Nx,self.Nx+1,dtype=int)
-    #     quasi_energy_operator_elements={}
-    #     for x in x_values:
-            
-            
-    #         if self.sparse==False:
-    #             K_element=np.zeros((4*self.N1_len*self.N2_len,4*self.N1_len*self.N2_len),dtype=complex)
-            
-    #         if self.sparse==True:
-    #             K_element=dok_matrix((4*self.N1_len*self.N2_len,4*self.N1_len*self.N2_len),dtype=complex)
-                
-    #         for i in range(2*self.Nx):
-    #             kx=2*np.pi/(2*self.Nx)*i
-    #             if self.sparse==True:
-    #                 K_element+=np.e**(1j*x*kx)/(2*self.Nx)*dok_matrix(self.static_quasi_energy_operator_k_space(epsilon,kx,eta=eta))
-    #             else:
-    #                 K_element+=np.e**(1j*x*kx)/(2*self.Nx)*self.static_quasi_energy_operator_k_space(epsilon,kx,eta=eta)
-                    
-    #         quasi_energy_operator_elements["{}".format(x)]=K_element
-    #         if x!=0:
-    #             quasi_energy_operator_elements["{}".format(-x)]=np.conj(K_element.T)
-                
-        
-    #     if self.sparse==False:
-    #         K=np.zeros((4*self.N1_len*self.N2_len*self.Nx,4*self.N1_len*self.N2_len*self.Nx),dtype=complex)
-        
-    #     if self.sparse==True:
-    #         K=dok_matrix((4*self.N1_len*self.N2_len*self.Nx,4*self.N1_len*self.N2_len*self.Nx),dtype=complex)
-        
-        
-    #     for m in range(self.Nx):
-    #         for n in range(self.Nx):
-    #             lower_x_index=m*4*self.N1_len*self.N2_len
-    #             upper_x_index=(m+1)*4*self.N1_len*self.N2_len
-    #             lower_y_index=n*4*self.N1_len*self.N2_len
-    #             upper_y_index=(n+1)*4*self.N1_len*self.N2_len
-                
-                
-    #             K[lower_x_index:upper_x_index,lower_y_index:upper_y_index]=quasi_energy_operator_elements["{}".format(m-n)]
-            
-        
-        
-    #     if self.sparse==True:
-    #         K=K.tocsc()
-               
-    #     self.static_K=K
-    
-    # def quasi_energy_operator(self,Vm):
-    #     #The quasi energy operator is loaded in and divided by two as it makes making it hermitian more convinient
-    #     K=self.static_K/2
-    #     for x in range(self.Nx):
-    #             for n1 in range(self.N1_len):
-    #                 for n2 in range(self.N2_len):
-    #                     if n1!=self.N1_len-1:
-    #                         K[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len),4*(n1+1+self.N1_len*n2+x*self.N1_len*self.N2_len)+1]=+Vm
-    #                         K[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)+3,4*(n1+1+self.N1_len*n2+x*self.N1_len*self.N2_len)+2]=-Vm
-                            
-                            
-    #                     if n2!=self.N2_len-1:
-    #                         K[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len),4*(n1+self.N1_len*(n2+1)+x*self.N1_len*self.N2_len)+1]=Vm
-    #                         K[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)+3,4*(n1+self.N1_len*(n2+1)+x*self.N1_len*self.N2_len)+2]=-Vm
-        
-    #     K+=np.conj(K.T)
-        
-    #     if self.sparse==True:
-    #         K=K.tocsc()
-                            
-    #     self.K=K
-    def real_space_SC_GF_elements(self,epsilon,eta=1j*10E-8):
-        #the required Htop elements are calcualted
-        #This requires the Greens function to be calcualted at 
-        GF_elements={}
-        kx_values=np.pi/self.Nx*np.linspace(0,2*self.Nx-1,2*self.Nx)
-        n1_values=np.linspace(self.N1_min,self.N1_max,self.N1_len,dtype=int)
-        n2_values=np.linspace(self.N1_min,self.N1_max,self.N1_len,dtype=int)
-        
-        x_values=np.linspace(-self.Nx,self.Nx,2*self.Nx+1)
-        
+        x_values=np.linspace(0,self.Nx,self.Nx+1,dtype=int)
+        quasi_energy_operator_elements={}
         for x in x_values:
-            for n1 in n1_values:
-                for n2 in n2_values:
-                    GF_elements[f"x={x}_n1={n1}_n2={n2}"]=0
-                    for kx in kx_values:
-                        GF_elements[f"x={x}_n1={n1}_n2={n2}"]+=-np.e**(1j*kx*x)/(2*self.Nx)*np.linalg.inv(self.TB_SC_GF(epsilon+n1*self.omega1+n2*self.omega2, 0, kx,eta=eta))
-        self.GF_elements=GF_elements
-    
-    def static_quasi_energy_operator(self,epsilon,eta=1j*10E-8):
-        Nx=self.Nx
-        N1_len=self.N1_len
-        N2_len=self.N2_len
+            
+            
+            if self.sparse==False:
+                K_element=np.zeros((4*self.N1_len*self.N2_len,4*self.N1_len*self.N2_len),dtype=complex)
+            
+            if self.sparse==True:
+                K_element=dok_matrix((4*self.N1_len*self.N2_len,4*self.N1_len*self.N2_len),dtype=complex)
+                
+            for i in range(2*self.Nx):
+                kx=2*np.pi/(2*self.Nx)*i
+                if self.sparse==True:
+                    K_element+=np.e**(1j*x*kx)/(2*self.Nx)*dok_matrix(self.static_quasi_energy_operator_k_space(epsilon,kx,eta=eta))
+                else:
+                    K_element+=np.e**(1j*x*kx)/(2*self.Nx)*self.static_quasi_energy_operator_k_space(epsilon,kx,eta=eta)
+                    
+            quasi_energy_operator_elements["{}".format(x)]=K_element
+            if x!=0:
+                quasi_energy_operator_elements["{}".format(-x)]=np.conj(K_element.T)
+                
         
         if self.sparse==False:
             K=np.zeros((4*self.N1_len*self.N2_len*self.Nx,4*self.N1_len*self.N2_len*self.Nx),dtype=complex)
@@ -411,92 +327,77 @@ class driven_magnetic_interface(object):
         if self.sparse==True:
             K=dok_matrix((4*self.N1_len*self.N2_len*self.Nx,4*self.N1_len*self.N2_len*self.Nx),dtype=complex)
         
-        self.real_space_SC_GF_elements(epsilon,eta=eta)
         
-        n1_values=np.linspace(self.N1_min,self.N1_max,self.N1_len,dtype=int)
-        n2_values=np.linspace(self.N1_min,self.N1_max,self.N1_len,dtype=int)
-        x_values=np.linspace(0,self.Nx-1,self.Nx)
+        for m in range(self.Nx):
+            for n in range(self.Nx):
+                lower_x_index=m*4*self.N1_len*self.N2_len
+                upper_x_index=(m+1)*4*self.N1_len*self.N2_len
+                lower_y_index=n*4*self.N1_len*self.N2_len
+                upper_y_index=(n+1)*4*self.N1_len*self.N2_len
+                
+                
+                K[lower_x_index:upper_x_index,lower_y_index:upper_y_index]=quasi_energy_operator_elements["{}".format(m-n)]
+            
         
-        for x1 in x_values:
-            for x2 in x_values:
-                for n1_indx,n1 in enumerate(n1_values):
-                    for n2_indx,n2 in enumerate(n2_values):
-                        if self.sparse==False:
-                            K[4*(x1+Nx*n1_indx+Nx*N1_len*n2_indx):4*(x1+1+Nx*n1_indx+Nx*N1_len*n2_indx),4*(x2+Nx*n1_indx+Nx*N1_len*n2_indx):4*(x2+1+Nx*n1_indx+Nx*N1_len*n2_indx)]=self.GF_elements[f"x={x1-x2}_n1={n1}_n2={n2}"]
-                        if self.sparse==True:
-                            K[4*(x1+Nx*n1_indx+Nx*N1_len*n2_indx):4*(x1+1+Nx*n1_indx+Nx*N1_len*n2_indx),4*(x2+Nx*n1_indx+Nx*N1_len*n2_indx):4*(x2+1+Nx*n1_indx+Nx*N1_len*n2_indx)]=dok_matrix(self.GF_elements[f"x={x1-x2}_n1={n1}_n2={n2}"])
-          
-        for x in x_values:
-            for n1_indx in range(N1_len):
-                for n2_indx in range(N2_len):
-                    K[4*(x+Nx*n1_indx+Nx*N1_len*n2_indx),4*(x+Nx*n1_indx+Nx*N1_len*n2_indx)]+=epsilon
-                    K[4*(x+Nx*n1_indx+Nx*N1_len*n2_indx)+1,4*(x+Nx*n1_indx+Nx*N1_len*n2_indx)+1]+=epsilon
-                    K[4*(x+Nx*n1_indx+Nx*N1_len*n2_indx)+2,4*(x+Nx*n1_indx+Nx*N1_len*n2_indx)+2]+=epsilon
-                    K[4*(x+Nx*n1_indx+Nx*N1_len*n2_indx)+3,4*(x+Nx*n1_indx+Nx*N1_len*n2_indx)+4]+=epsilon
-                    
+        
         if self.sparse==True:
-            self.static_K=K.tocsc()
-        else:
-            self.static_K=K
-            
-            
-    def quasi_energy_operator(self,epsilon,Vm,eta=1j*10E-8):
-        K=self.static_K
-        
-        
-        Nx=self.Nx
-        N1_len=self.N1_len
-        N2_len=self.N2_len
-        for x in range(Nx):
-            for n1_indx in range(N1_len):
-                for n2_indx in range(N2_len):
-                    if n1_indx!=N1_len-1:
-                        K[4*(x+Nx*n1_indx+Nx*N1_len*n2_indx),4*(x+Nx*(n1_indx+1)+Nx*N1_len*n2_indx)+1]=Vm
-                        K[4*(x+Nx*n1_indx+Nx*N1_len*n2_indx)+3,4*(x+Nx*(n1_indx+1)+Nx*N1_len*n2_indx)+2]=-Vm
-                        K[4*(x+Nx*(n1_indx+1)+Nx*N1_len*n2_indx)+1,4*(x+Nx*n1_indx+Nx*N1_len*n2_indx)]=Vm
-                        K[4*(x+Nx*(n1_indx+1)+Nx*N1_len*n2_indx)+2,4*(x+Nx*n1_indx+Nx*N1_len*n2_indx)+3]=-Vm
-                    if n2_indx!=N2_len-1:
-                        K[4*(x+Nx*n1_indx+Nx*N1_len*n2_indx),4*(x+Nx*(n1_indx)+Nx*N1_len*(n2_indx+1))+1]=Vm
-                        K[4*(x+Nx*n1_indx+Nx*N1_len*n2_indx)+3,4*(x+Nx*(n1_indx)+Nx*N1_len*(n2_indx+1))+2]=-Vm
-                        K[4*(x+Nx*n1_indx+Nx*N1_len*(n2_indx+1))+1,4*(x+Nx*(n1_indx)+Nx*N1_len*n2_indx)]=Vm
-                        K[4*(x+Nx*n1_indx+Nx*N1_len*(n2_indx+1))+2,4*(x+Nx*(n1_indx)+Nx*N1_len*n2_indx)+3]=-Vm
-                        
-        self.K=K
-
+            K=K.tocsc()
+               
+        self.static_K=K
     
+    def quasi_energy_operator(self,Vm):
+        #The quasi energy operator is loaded in and divided by two as it makes making it hermitian more convinient
+        K=self.static_K/2
+        for x in range(self.Nx):
+                for n1 in range(self.N1_len):
+                    for n2 in range(self.N2_len):
+                        if n1!=self.N1_len-1:
+                            K[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len),4*(n1+1+self.N1_len*n2+x*self.N1_len*self.N2_len)+1]=+Vm
+                            K[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)+3,4*(n1+1+self.N1_len*n2+x*self.N1_len*self.N2_len)+2]=-Vm
+                            
+                            
+                        if n2!=self.N2_len-1:
+                            K[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len),4*(n1+self.N1_len*(n2+1)+x*self.N1_len*self.N2_len)+1]=Vm
+                            K[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)+3,4*(n1+self.N1_len*(n2+1)+x*self.N1_len*self.N2_len)+2]=-Vm
+        
+        K+=np.conj(K.T)
+        
+        if self.sparse==True:
+            K=K.tocsc()
+                            
+        self.K=K
 
     
 #Spectral Localiser------------------------------------------------------------
     
     def position_operator(self):
-        Nx=self.Nx
-        N1_len=self.N1_len
-        N2_len=self.N2_len
         
         if self.sparse==False:
             X_diag=np.zeros((4*self.Nx*self.N1_len*self.N2_len))
             
-            for x in range(Nx):
-                for n1 in range(N1_len):
-                    for n2 in range(N2_len):
-                        X_diag[4*(x+Nx*n1+Nx*N1_len*n2)]=x
-                        X_diag[4*(x+Nx*n1+Nx*N1_len*n2)+1]=x
-                        X_diag[4*(x+Nx*n1+Nx*N1_len*n2)+2]=x
-                        X_diag[4*(x+Nx*n1+Nx*N1_len*n2)+3]=x
+            for x in range(self.Nx):
+                for n1 in range(self.N1_len):
+                    for n2 in range(self.N2_len):
+                        #Need to redo the indexing 
+                       X_diag[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)]=x
+                       X_diag[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)+1]=x
+                       X_diag[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)+2]=x
+                       X_diag[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)+3]=x
             self.X=np.diagflat(X_diag)
             
         if self.sparse==True:
             
             X=dok_matrix((4*self.Nx*self.N1_len*self.N2_len,4*self.Nx*self.N1_len*self.N2_len))
-    
-            for x in range(Nx):
-                for n1 in range(N1_len):
-                    for n2 in range(N2_len):
-                        X[4*(x+Nx*n1+Nx*N1_len*n2),4*(x+Nx*n1+Nx*N1_len*n2)]=x
-                        X[4*(x+Nx*n1+Nx*N1_len*n2)+1,4*(x+Nx*n1+Nx*N1_len*n2)+1]=x
-                        X[4*(x+Nx*n1+Nx*N1_len*n2)+2,4*(x+Nx*n1+Nx*N1_len*n2)+2]=x
-                        X[4*(x+Nx*n1+Nx*N1_len*n2)+3,4*(x+Nx*n1+Nx*N1_len*n2)+3]=x
-                        
+            # print(4*self.Nx*self.N1_len*self.N2_len)
+            # print(self.Nx,self.N1_len,self.N1,self.N2_len,self.N2)
+            for x in range(self.Nx):
+                for n1 in range(self.N1_len):
+                    for n2 in range(self.N2_len):
+                        X[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len),4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)]=x
+                        X[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)+1,4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)+1]=x
+                        X[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)+2,4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)+2]=x
+                        X[4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)+3,4*(n1+self.N1_len*n2+x*self.N1_len*self.N2_len)+3]=x
+            
             X=X.tocsc()
             self.X=X
         

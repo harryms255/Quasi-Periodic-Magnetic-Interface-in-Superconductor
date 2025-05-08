@@ -84,7 +84,7 @@ for Vm_indx,Vm in enumerate(tqdm(Vm_values)):
 
 fig,ax=plt.subplots()
 for i in range(Nev):
-    plt.plot(Vm_values,spectrum[i,:],"k")
+    plt.plot(Vm_values,spectrum[i,:],"k.")
 
 phase_boundary=TB_phase_boundaries(t, mu, Delta, km, B, np.pi/2, 1,kx=0)
 ax.set_xlabel(r"$V_m/t$")
