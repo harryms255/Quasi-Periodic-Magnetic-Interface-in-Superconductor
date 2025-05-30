@@ -52,7 +52,7 @@ N1_closed=False
 N2_closed=True
 sparse=True
 
-Vm_values=np.linspace(0,1.5,21)
+Vm_values=np.linspace(0,1,21)
 
 
 params={"Nx":Nx,
